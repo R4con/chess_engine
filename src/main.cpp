@@ -2,7 +2,7 @@
 
 int main() 
 {
-    Board board_obj = new Board();
+    Board board_obj;
 
-    board_obj.Say_Hello("Hi from Main");
+    board_obj.display_board();
 }
