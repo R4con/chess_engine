@@ -9,7 +9,7 @@ enum ChessPiece { Pawn, Knight, Bishop, Rook, Queen, King };
 
 struct Bitboard
 {
-    int64_t pieceboard;
+    uint64_t pieceboard;
     ChessPiece piece;
     ChessColor color; // white=0, black=1
 };
@@ -21,8 +21,9 @@ class Board {
         ~Board();   // Destructor
 
         //Additional Methods
-        void display_board();
-
+        void display_board();           // Display current board to std::cout.
+        std::string get_board_fen();    // Get current board in fen notation.
+        
     private:
         // Private Vars
         // bitboard for pieces Pawn, Knight, Bishop, Rook, Queen, King

@@ -1,6 +1,5 @@
 #include "board.h"
 #include <iostream>
-#include <bitset>
 
 int main() 
 {

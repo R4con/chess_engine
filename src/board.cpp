@@ -43,7 +43,7 @@ void Board::display_board() {
                     output[j]='Q';
                     break;
                 case King:
-                    output[j]='P';
+                    output[j]='K';
                     break;
                 default:
                     throw "Error: bitboard for no piece cannot be handelt.";
@@ -69,7 +69,7 @@ void Board::display_board() {
                     output[j]='q';
                     break;
                 case King:
-                    output[j]='p';
+                    output[j]='k';
                     break;
                 default:
                     throw "Error: bitboard for no piece cannot be handelt.";
@@ -105,6 +105,12 @@ void Board::display_board() {
     }
 
     std::cout << s_output;  
+}
+
+std::string Board::get_board_fen() {
+    std::string str_output = "Not Implementet yet!";
+
+    return str_output;
 }
 
 Bitboard* Board::init_default(ChessColor color) {
