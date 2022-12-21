@@ -31,6 +31,12 @@ class Board {
         Bitboard* bitboard_w;
         Bitboard* bitboard_b;
 
+        ChessColor active_color;
+
+        // TODO change to move bitboard
+        bool allowed_to_castle[4]; // 0: white Kingside,1: white Queenside,2: black Kingside,3: black Queenside
+        bool possible_en_passant[2]; //0: white, 1:black
+
         // Private Methods
         Bitboard* init_default(ChessColor color);
 
