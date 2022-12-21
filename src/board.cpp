@@ -20,9 +20,9 @@ void Board::display_board() {
     char output[64];
     std::fill_n(output, 64, ' ');
 
-    for (int8_t j = 0; j < 64; j++)
+    for (uint8_t j = 0; j < 64; j++)
     {
-        for (int8_t i = 0; i < this->bitboard_size; i++) 
+        for (uint8_t i = 0; i < this->bitboard_size; i++) 
         {
             if ((this->bitboard_w[i].pieceboard & (1LL << j)) != 0) {
                 switch (this->bitboard_w[i].piece)
@@ -79,7 +79,7 @@ void Board::display_board() {
         }
     }
 
-    for (int8_t i = 0; i < 64; i++)
+    for (uint8_t i = 0; i < 64; i++)
     {
         //std::cout << std::bitset<8>(output[i]) << std::endl;
     }
@@ -88,9 +88,9 @@ void Board::display_board() {
 
     std::string s_output;
 
-    for (int8_t i = 0; i < 8; i++)
+    for (uint8_t i = 0; i < 8; i++)
     {
-        for (int8_t j = 0; j < 8; j++)
+        for (uint8_t j = 0; j < 8; j++)
         {
             if(j != 7) {
                 s_output.push_back(output[8*i+j]);
@@ -111,6 +111,52 @@ std::string Board::get_board_fen() {
     std::string str_output = "Not Implementet yet!";
 
     return str_output;
+}
+
+uint64_t Board::get_attack_pattern(ChessPiece piece, ChessColor color,uint8_t pos) {
+    uint64_t pattern = 0;
+    int8_t color_sgn = color ? -1 : 1;
+
+    switch (piece)
+    {
+    case Pawn:
+        pattern |= 1 << (pos + 8 * color_sgn);
+        pattern |= 1 << (pos + 16 * color_sgn);
+        break;
+    case Knight:
+        pattern |= 1 << (pos + 17);
+        pattern |= 1 << (pos + 15);
+        pattern |= 1 << (pos + 10);
+        pattern |= 1 << (pos + 6);
+        pattern |= 1 << (pos - 17);
+        pattern |= 1 << (pos - 15);
+        pattern |= 1 << (pos - 10);
+        pattern |= 1 << (pos - 6);
+        break;
+    case Bishop:
+        
+        break;
+    case Rook:
+        pattern |= 0x00000000000000FF << 8 * pos/8;
+        pattern |= 
+        break;
+    case Queen:
+        
+        break;
+    case King:
+        pattern |= 1 << (pos + 8);
+        pattern |= 1 << (pos - 8);
+        pattern |= 1 << (pos + 9);
+        pattern |= 1 << (pos - 9);
+        pattern |= 1 << (pos + 7);
+        pattern |= 1 << (pos - 7);
+        pattern |= 1 << (pos + 1);
+        pattern |= 1 << (pos - 1);
+        break;
+    default:
+        throw "Error: Attack Move cannot be generated for no piece!";
+        break;
+    }
 }
 
 Bitboard* Board::init_default(ChessColor color) {

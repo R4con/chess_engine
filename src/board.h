@@ -39,6 +39,7 @@ class Board {
 
         // Private Methods
         Bitboard* init_default(ChessColor color);
+        uint64_t get_attack_pattern(ChessPiece piece, ChessColor color, uint8_t pos);
 
 };
 
