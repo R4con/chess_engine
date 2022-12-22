@@ -6,5 +6,5 @@ int main()
 {
     Board board_obj;
 
-    board_obj.display_board();
+    board_obj.display_raw_board( board_obj.get_move_pattern(Rook, White, 15) );    
 }

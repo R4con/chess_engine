@@ -24,7 +24,7 @@ void Board::display_board() {
     {
         for (uint8_t i = 0; i < this->bitboard_size; i++) 
         {
-            if ((this->bitboard_w[i].pieceboard & (1LL << j)) != 0) {
+            if ((this->bitboard_w[i].pieceboard & (1ULL << j)) != 0) {
                 switch (this->bitboard_w[i].piece)
                 {
                 case Pawn:
@@ -50,7 +50,7 @@ void Board::display_board() {
                     break;
                 }
             }
-            if ((this->bitboard_b[i].pieceboard & (1LL << j)) != 0) {
+            if ((this->bitboard_b[i].pieceboard & (1ULL << j)) != 0) {
                 switch (this->bitboard_b[i].piece)
                 {
                 case Pawn:
@@ -77,20 +77,13 @@ void Board::display_board() {
                 }
             }
         }
-    }
-
-    for (uint8_t i = 0; i < 64; i++)
-    {
-        //std::cout << std::bitset<8>(output[i]) << std::endl;
-    }
-    
-    
+    }  
 
     std::string s_output;
 
-    for (uint8_t i = 0; i < 8; i++)
+    for (int8_t i = 7; i >=0; i--)
     {
-        for (uint8_t j = 0; j < 8; j++)
+        for (int8_t j = 0; j < 8; j++)
         {
             if(j != 7) {
                 s_output.push_back(output[8*i+j]);
@@ -107,56 +100,90 @@ void Board::display_board() {
     std::cout << s_output;  
 }
 
+void Board::display_raw_board(uint64_t board) {
+    std::string output = "";
+
+    for (int8_t i = 7; i >= 0; i--)
+    {
+        for (int8_t j = 0; j < 8; j++)
+        {
+            if(j != 7) {
+                output.push_back((board & (1ULL << 8*i+j)) ? '1' : '0');
+                output.push_back(' ');
+            }
+            else {
+                output.push_back((board & (1ULL << 8*i+j)) ? '1' : '0');
+                output.push_back('\n');
+            }
+        }
+    }
+
+    std::cout << output;
+    std::cout << "- - - - - - - -" << std::endl;
+}
+
 std::string Board::get_board_fen() {
     std::string str_output = "Not Implementet yet!";
 
     return str_output;
 }
 
-uint64_t Board::get_attack_pattern(ChessPiece piece, ChessColor color,uint8_t pos) {
+uint64_t Board::get_move_pattern(ChessPiece piece, ChessColor color,uint8_t pos) {
     uint64_t pattern = 0;
-    int8_t color_sgn = color ? -1 : 1;
 
     switch (piece)
     {
     case Pawn:
-        pattern |= 1 << (pos + 8 * color_sgn);
-        pattern |= 1 << (pos + 16 * color_sgn);
+        if (!color) // white=0
+        {
+            if (pos <= 63-8) pattern |= (1ULL << (pos + 8));
+            if (pos <= 15 && pos >= 8) pattern |= (1ULL << (pos + 16));    
+        } else 
+        {
+            if (pos >= 8) pattern |= (1ULL << (pos - 8));
+            if (pos >= 63-15 && pos <= 63-8) pattern |= (1ULL << (pos - 16));
+        }
+        
         break;
     case Knight:
-        pattern |= 1 << (pos + 17);
-        pattern |= 1 << (pos + 15);
-        pattern |= 1 << (pos + 10);
-        pattern |= 1 << (pos + 6);
-        pattern |= 1 << (pos - 17);
-        pattern |= 1 << (pos - 15);
-        pattern |= 1 << (pos - 10);
-        pattern |= 1 << (pos - 6);
+        if (pos <= 63-17 && pos%8 <= 6) pattern |= (1ULL << (pos + 17));
+        if (pos <= 63-15 && pos%8 >= 1) pattern |= (1ULL << (pos + 15));
+        if (pos <= 63-10 && pos%8 <= 5) pattern |= (1ULL << (pos + 10));
+        if (pos <= 63-6  && pos%8 >= 2) pattern |= (1ULL << (pos + 6));
+        if (pos >= 17    && pos%8 >= 1) pattern |= (1ULL << (pos - 17));
+        if (pos >= 15    && pos%8 <= 6) pattern |= (1ULL << (pos - 15));
+        if (pos >= 10    && pos%8 >= 2) pattern |= (1ULL << (pos - 10));
+        if (pos >= 6     && pos%8 <= 5) pattern |= (1ULL << (pos - 6));
         break;
     case Bishop:
         
         break;
     case Rook:
-        pattern |= 0x00000000000000FF << 8 * pos/8;
-        pattern |= 
+        pattern |= (0x00000000000000FFULL << (pos & 56));
+        pattern |= (0x0101010101010101ULL << (pos & 7));
+        pattern ^= 1ULL << pos;
         break;
     case Queen:
-        
+        pattern |= (0x00000000000000FFULL << (pos & 56));
+        pattern |= (0x0101010101010101ULL << (pos & 7));
+        pattern ^= 1ULL << pos;
         break;
     case King:
-        pattern |= 1 << (pos + 8);
-        pattern |= 1 << (pos - 8);
-        pattern |= 1 << (pos + 9);
-        pattern |= 1 << (pos - 9);
-        pattern |= 1 << (pos + 7);
-        pattern |= 1 << (pos - 7);
-        pattern |= 1 << (pos + 1);
-        pattern |= 1 << (pos - 1);
+        if (pos <= 63-8)                pattern |= (1ULL << (pos + 8));
+        if (pos >= 8   )                pattern |= (1ULL << (pos - 8));
+        if (pos <= 63-9 && pos%8 <= 6)  pattern |= (1ULL << (pos + 9));
+        if (pos >= 9    && pos%8 >= 1)  pattern |= (1ULL << (pos - 9));
+        if (pos <= 63-7 && pos%8 >= 1)  pattern |= (1ULL << (pos + 7));
+        if (pos >= 7    && pos%8 <= 6)  pattern |= (1ULL << (pos - 7));
+        if (pos%8 <= 6)                 pattern |= (1ULL << (pos + 1));
+        if (pos%8 >= 1)                 pattern |= (1ULL << (pos - 1));
         break;
     default:
         throw "Error: Attack Move cannot be generated for no piece!";
         break;
     }
+
+    return pattern;
 }
 
 Bitboard* Board::init_default(ChessColor color) {
@@ -165,27 +192,27 @@ Bitboard* Board::init_default(ChessColor color) {
 
     tmp_board[0].color = color;
     tmp_board[0].piece = Pawn;
-    tmp_board[0].pieceboard = color==White ? 0b11111111LL << 48 : 0b11111111LL << 8;
+    tmp_board[0].pieceboard = color==White ? 0b11111111ULL << 8 : 0b11111111ULL << 48;
 
     tmp_board[1].color = color;
     tmp_board[1].piece = Knight;
-    tmp_board[1].pieceboard = color==White ? 0b01000010LL << 56 : 0b01000010LL;
+    tmp_board[1].pieceboard = color==White ? 0b01000010ULL : 0b01000010ULL << 56;
 
     tmp_board[2].color = color;
     tmp_board[2].piece = Bishop;
-    tmp_board[2].pieceboard = color==White ? 0b00100100LL << 56 : 0b00100100LL;
+    tmp_board[2].pieceboard = color==White ? 0b00100100ULL : 0b00100100ULL << 56;
 
     tmp_board[3].color = color;
     tmp_board[3].piece = Rook;
-    tmp_board[3].pieceboard = color==White ? 0b10000001LL << 56 : 0b10000001LL;
+    tmp_board[3].pieceboard = color==White ? 0b10000001ULL : 0b10000001ULL << 56;
 
     tmp_board[4].color = color;
     tmp_board[4].piece = Queen;
-    tmp_board[4].pieceboard = color==White ? 0b00010000LL << 56 : 0b00010000LL;
+    tmp_board[4].pieceboard = color==White ? 0b00010000ULL : 0b00010000ULL << 56;
 
     tmp_board[5].color = color;
     tmp_board[5].piece = King;
-    tmp_board[5].pieceboard = color==White ? 0b00001000LL << 56 : 0b00001000LL;
+    tmp_board[5].pieceboard = color==White ? 0b00001000ULL : 0b00001000ULL << 56;
 
     return tmp_board;
 }
