@@ -22,7 +22,7 @@ class Board {
 
         //Additional Methods
         void display_board();           // Display current board to std::cout.
-        void display_raw_board(uint64_t board); // Displays the given board to std::cout.
+        void display_raw_board(uint64_t board, uint64_t mask = 0ULL); // Displays the given board to std::cout.
         std::string get_board_fen();    // Get current board in fen notation.
 
     //private:  //! Just for Testing!
@@ -41,6 +41,7 @@ class Board {
         // Private Methods
         Bitboard* init_default(ChessColor color);
         uint64_t get_move_pattern(ChessPiece piece, ChessColor color, uint8_t pos);
+        uint64_t get_attack_pattern(ChessPiece piece, ChessColor color, uint8_t pos);
 };
 
 #endif

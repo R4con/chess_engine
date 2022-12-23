@@ -18,7 +18,7 @@ Board::~Board() {
 
 void Board::display_board() {
     char output[64];
-    std::fill_n(output, 64, ' ');
+    std::fill_n(output, 64, '.');
 
     for (uint8_t j = 0; j < 64; j++)
     {
@@ -100,19 +100,23 @@ void Board::display_board() {
     std::cout << s_output;  
 }
 
-void Board::display_raw_board(uint64_t board) {
+void Board::display_raw_board(uint64_t board, uint64_t mask) {
     std::string output = "";
 
     for (int8_t i = 7; i >= 0; i--)
     {
         for (int8_t j = 0; j < 8; j++)
         {
-            if(j != 7) {
-                output.push_back((board & (1ULL << 8*i+j)) ? '1' : '0');
-                output.push_back(' ');
+            if (mask & (1ULL << 8*i+j)) {
+                output.push_back((board & (1ULL << 8*i+j)) ? '#' : '*');
             }
             else {
                 output.push_back((board & (1ULL << 8*i+j)) ? '1' : '0');
+            }
+            if(j != 7) {
+                output.push_back(' ');
+            }
+            else {
                 output.push_back('\n');
             }
         }
@@ -128,7 +132,7 @@ std::string Board::get_board_fen() {
     return str_output;
 }
 
-uint64_t Board::get_move_pattern(ChessPiece piece, ChessColor color,uint8_t pos) {
+uint64_t Board::get_move_pattern(ChessPiece piece, ChessColor color, uint8_t pos) {
     uint64_t pattern = 0;
 
     switch (piece)
@@ -156,7 +160,16 @@ uint64_t Board::get_move_pattern(ChessPiece piece, ChessColor color,uint8_t pos)
         if (pos >= 6     && pos%8 <= 5) pattern |= (1ULL << (pos - 6));
         break;
     case Bishop:
-        
+        {   //code block to limit lifetime of vars
+            uint64_t maindia = 0x8040201008040201ULL;
+            int64_t diag = (pos&7) - (pos>>3);
+            pattern |= (diag >= 0 ? maindia >> diag*8 : maindia << -diag*8);
+
+            uint64_t maindia1 = 0x0102040810204080ULL;
+            diag = 7 - (pos&7) - (pos>>3);
+            pattern |= (diag >= 0 ? maindia1 >> diag*8 : maindia1 << (-diag*8));
+            pattern ^= 1ULL << pos;
+        }
         break;
     case Rook:
         pattern |= (0x00000000000000FFULL << (pos & 56));
@@ -164,9 +177,19 @@ uint64_t Board::get_move_pattern(ChessPiece piece, ChessColor color,uint8_t pos)
         pattern ^= 1ULL << pos;
         break;
     case Queen:
-        pattern |= (0x00000000000000FFULL << (pos & 56));
-        pattern |= (0x0101010101010101ULL << (pos & 7));
-        pattern ^= 1ULL << pos;
+        {
+            pattern |= (0x00000000000000FFULL << (pos & 56));
+            pattern |= (0x0101010101010101ULL << (pos & 7));
+
+            uint64_t maindia = 0x8040201008040201ULL;
+            int64_t diag = (pos&7) - (pos>>3);
+            pattern |= (diag >= 0 ? maindia >> diag*8 : maindia << -diag*8);
+
+            uint64_t maindia1 = 0x0102040810204080ULL;
+            diag = 7 - (pos&7) - (pos>>3);
+            pattern |= (diag >= 0 ? maindia1 >> diag*8 : maindia1 << (-diag*8));
+            pattern ^= 1ULL << pos;
+        }
         break;
     case King:
         if (pos <= 63-8)                pattern |= (1ULL << (pos + 8));
@@ -182,6 +205,22 @@ uint64_t Board::get_move_pattern(ChessPiece piece, ChessColor color,uint8_t pos)
         throw "Error: Attack Move cannot be generated for no piece!";
         break;
     }
+
+    return pattern;
+}
+
+uint64_t Board::get_attack_pattern(ChessPiece piece, ChessColor color, uint8_t pos) {
+    uint64_t pattern = 0;
+    uint64_t mov_pattern = get_move_pattern(piece, color, pos);
+    uint64_t blockers = 0;
+
+    for (uint8_t i = 0; i < 6; i++)
+    {
+        blockers |= this->bitboard_w[i].pieceboard;
+        blockers |= this->bitboard_b[i].pieceboard;
+    }
+
+    pattern = blockers ^ mov_pattern;
 
     return pattern;
 }
