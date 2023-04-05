@@ -3,6 +3,7 @@
 #include <string>
 #include <bitset>
 
+// init board with default piece location
 Board::Board() {
     this->bitboard_w = init_default(White);
     this->bitboard_b = init_default(Black);
@@ -10,12 +11,14 @@ Board::Board() {
     std::cout << "Board Obj created" << std::endl;
 }
 
+// delete used objects
 Board::~Board() {
     std::cout << "Board Obj destroyed" << std::endl;
     delete[] bitboard_w;
     delete[] bitboard_b;
 }
 
+// display the current board to console
 void Board::display_board() {
     char output[64];
     std::fill_n(output, 64, '.');
@@ -100,7 +103,8 @@ void Board::display_board() {
     std::cout << s_output;  
 }
 
-void Board::display_raw_board(uint64_t board, uint64_t mask) {
+// display given board as bits to console with a optional mask
+void Board::display_raw_board(uint64_t board, uint64_t mask = 0ULL) {
     std::string output = "";
 
     for (int8_t i = 7; i >= 0; i--)
@@ -132,7 +136,8 @@ std::string Board::get_board_fen() {
     return str_output;
 }
 
-uint64_t Board::get_move_pattern(ChessPiece piece, ChessColor color, uint8_t pos) {
+// returns the move pattern mask of a given pice
+uint64_t Board::get_raw_move_pattern(ChessPiece piece, ChessColor color, uint8_t pos) {
     uint64_t pattern = 0;
 
     switch (piece)
@@ -209,9 +214,34 @@ uint64_t Board::get_move_pattern(ChessPiece piece, ChessColor color, uint8_t pos
     return pattern;
 }
 
+// TODO check if the functions get_move_pattern and get_attack_pattern can be shortened. They are very similar.
+// returns every field the given piece can move to. (including attacks)
+uint64_t Board::get_move_pattern(ChessPiece piece, ChessColor color, uint8_t pos) {
+    uint64_t pattern = get_raw_move_pattern(piece, color, pos);
+
+    // 
+    uint64_t occupied_fields = 0;
+    for (uint8_t i = 0; i < 6; i++)
+    {
+        occupied_fields |= this->bitboard_w[i].pieceboard;
+        occupied_fields |= this->bitboard_b[i].pieceboard;
+    }
+
+    // remove occupied fields from possible move list.
+    occupied_fields &= pattern;
+    pattern ^= occupied_fields;
+
+    // add attacked positions
+    pattern |= get_attack_pattern(piece, color, pos);
+    
+    return pattern;
+}
+
+// returns a mask, where every attacked pice is 1 and everything else is 0
 uint64_t Board::get_attack_pattern(ChessPiece piece, ChessColor color, uint8_t pos) {
+    //TODO finish this function
     uint64_t pattern = 0;
-    uint64_t mov_pattern = get_move_pattern(piece, color, pos);
+    uint64_t mov_pattern = get_raw_move_pattern(piece, color, pos);
     uint64_t blockers = 0;
 
     for (uint8_t i = 0; i < 6; i++)
