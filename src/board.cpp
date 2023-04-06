@@ -104,7 +104,7 @@ void Board::display_board() {
 }
 
 // display given board as bits to console with a optional mask
-void Board::display_raw_board(uint64_t board, uint64_t mask = 0ULL) {
+void Board::display_raw_board(uint64_t board, uint64_t mask) {
     std::string output = "";
 
     for (int8_t i = 7; i >= 0; i--)
@@ -242,17 +242,49 @@ uint64_t Board::get_attack_pattern(ChessPiece piece, ChessColor color, uint8_t p
     //TODO finish this function
     uint64_t pattern = 0;
     uint64_t mov_pattern = get_raw_move_pattern(piece, color, pos);
-    uint64_t blockers = 0;
+    uint64_t occupied_fields = 0;
 
     for (uint8_t i = 0; i < 6; i++)
     {
-        blockers |= this->bitboard_w[i].pieceboard;
-        blockers |= this->bitboard_b[i].pieceboard;
+        occupied_fields |= this->bitboard_w[i].pieceboard;
+        occupied_fields |= this->bitboard_b[i].pieceboard;
     }
+    
+    occupied_fields &= mov_pattern;
+    pattern = occupied_fields ^ mov_pattern;
 
-    pattern = blockers ^ mov_pattern;
+    display_raw_board(pattern);
+
+    // correct movment to exclude blocked path
+    for (int8_t i = 7; i >= 0; i--) {
+        for (int8_t j = 0; j < 8; j++) {
+            uint8_t curr_pos = i*8+j;
+            if ((pattern & (1ULL << curr_pos)) == 0) continue;
+
+            uint64_t mask = get_raw_move_pattern(King, White, curr_pos);
+
+            if ((pattern & mask) == 0){
+                pattern ^= 1ULL << curr_pos;
+            }
+        }
+    }
+    display_raw_board(pattern);
 
     return pattern;
+}
+
+bool Board::set_pos(uint8_t x, u_int8_t y, ChessColor color, ChessPiece Piece) {
+    // ! not threat safe
+    Bitboard* board;
+    if (color == White) {
+        board = this->bitboard_w;
+    } else {
+        board = this->bitboard_b;
+    }
+
+    board[Piece].pieceboard |= 1ULL << x*8+y;
+
+    return true;
 }
 
 Bitboard* Board::init_default(ChessColor color) {

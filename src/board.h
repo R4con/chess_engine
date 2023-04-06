@@ -29,7 +29,7 @@ class Board {
         // Private Vars
         // bitboard for pieces Pawn, Knight, Bishop, Rook, Queen, King
         const uint8_t bitboard_size = 6;
-        Bitboard* bitboard_w;
+        Bitboard* bitboard_w;       //* these are arrays of size 6 !
         Bitboard* bitboard_b;
 
         ChessColor active_color;
@@ -43,6 +43,7 @@ class Board {
         uint64_t get_move_pattern(ChessPiece piece, ChessColor color, uint8_t pos);
         uint64_t get_raw_move_pattern(ChessPiece piece, ChessColor color, uint8_t pos);
         uint64_t get_attack_pattern(ChessPiece piece, ChessColor color, uint8_t pos);
+        bool set_pos(uint8_t x, u_int8_t y, ChessColor color, ChessPiece Piece);
 };
 
 #endif
