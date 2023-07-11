@@ -239,21 +239,28 @@ uint64_t Board::get_move_pattern(ChessPiece piece, ChessColor color, uint8_t pos
 
 // returns a mask, where every attacked pice is 1 and everything else is 0
 uint64_t Board::get_attack_pattern(ChessPiece piece, ChessColor color, uint8_t pos) {
-    //TODO finish this function
+    // TODO finish this function
+    // TODO maybe rewrite the entire function, to be combined with the move pattern generation.
+    // so move along the Diagonals and check for each square at a time.
+
     uint64_t pattern = 0;
+    uint64_t old_pattern = 0;
     uint64_t mov_pattern = get_raw_move_pattern(piece, color, pos);
     uint64_t occupied_fields = 0;
+    uint64_t occupied_fields_c[] = {0,0};
 
     for (uint8_t i = 0; i < 6; i++)
     {
-        occupied_fields |= this->bitboard_w[i].pieceboard;
-        occupied_fields |= this->bitboard_b[i].pieceboard;
+        occupied_fields_c[White] |= this->bitboard_w[i].pieceboard;
+        occupied_fields_c[Black] |= this->bitboard_b[i].pieceboard;
     }
+
+    occupied_fields = occupied_fields_c[White] | occupied_fields_c[Black];
     
+    // exclude occupied_fields from pattern
     occupied_fields &= mov_pattern;
     pattern = occupied_fields ^ mov_pattern;
-
-    display_raw_board(pattern);
+    old_pattern = pattern;
 
     // correct movment to exclude blocked path
     for (int8_t i = 7; i >= 0; i--) {
@@ -268,6 +275,32 @@ uint64_t Board::get_attack_pattern(ChessPiece piece, ChessColor color, uint8_t p
             }
         }
     }
+    
+
+    // add attacked pieces to pattern
+    uint64_t attacked_pieces = 0;
+    attacked_pieces = mov_pattern & occupied_fields_c[color?White:Black];
+    attacked_pieces &= ~old_pattern;
+
+    pattern |= attacked_pieces;
+
+    display_raw_board(pattern);
+
+    // TODO exclude disconnected path of length 2 or more
+    // correct movement to exclude blocked attacks
+    for (int8_t i = 7; i >= 0; i--) {
+        for (int8_t j = 0; j < 8; j++) {
+            uint8_t curr_pos = i*8+j;
+            if ((pattern & (1ULL << curr_pos)) == 0) continue;
+
+            uint64_t mask = get_raw_move_pattern(King, White, curr_pos);
+
+            if ((pattern & mask) == 0){
+                pattern ^= 1ULL << curr_pos;
+            }
+        }
+    }
+
     display_raw_board(pattern);
 
     return pattern;
